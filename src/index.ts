@@ -8,7 +8,7 @@ import { isEndpointExistMiddleware } from './middlewares/is-endpoint-exist';
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT;
+const port = 8000;
 
 app.use(isEndpointExistMiddleware);
 app.use(authMiddleware);
