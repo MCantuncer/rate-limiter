@@ -11,3 +11,10 @@ This API has 5 different endpoints which have different weights.
 📚 Used stack: NodeJS (TS), Redis
 
 🏠 Redis stores generated uuid data by email and first request date and total request count in specified minutes (**_PER_X_MINUTES_**: can be changed in **.env**) 
+
+You can run it as followings:
+
+- docker compose build
+- docker compose up
+- visit http://localhost:8000 via browser or Postman like platform.
+- it's good to go 🚀
