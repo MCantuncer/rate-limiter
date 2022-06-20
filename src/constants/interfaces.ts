@@ -36,3 +36,10 @@ export interface IRequestLimitations {
   reqType: REQUEST_TYPE;
   reqWeight: number;
 }
+
+export interface IRequestData {
+  redisData: IRedisData;
+  endpointDetails: IEndpointDetail;
+  responseData: IResponse;
+  requestLimitations: IRequestLimitations;
+}
