@@ -8,7 +8,7 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  const epDetails = req.endpointDetails || getEndpointDetails(req);
+  const epDetails = req.reqData?.endpointDetails || getEndpointDetails(req);
 
   if (epDetails!.type === REQUEST_TYPE.PUBLIC) return next();
 

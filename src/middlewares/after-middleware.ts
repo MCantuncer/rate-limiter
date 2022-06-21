@@ -10,7 +10,7 @@ export const afterMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  const epDetails = req.endpointDetails || getEndpointDetails(req);
+  const epDetails = req.reqData?.endpointDetails || getEndpointDetails(req);
   const key = await getKeyByReqType(req, epDetails.type);
 
   const record = await redisHelper({
@@ -24,6 +24,6 @@ export const afterMiddleware = async (
 
   await redisHelper({ type: REDIS_REQUEST_TYPE.SET, key, data });
 
-  req.redisData = data;
+  req.reqData.redisData = data;
   next();
 };
