@@ -12,9 +12,9 @@ export const basicHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  const epDetails = req.endpointDetails || getEndpointDetails(req);
+  const epDetails = req.reqData?.endpointDetails || getEndpointDetails(req);
 
-  req.responseData = {
+  req.reqData.responseData = {
     message: `Endpoint type: ${epDetails.type}, weight: ${epDetails.weight}`,
   };
 
@@ -23,11 +23,11 @@ export const basicHandler = (
 
 // This handler will be in charge of serving response with update regarding NODE_ENV.
 export const finalResponseHandler = async (req: Request, res: Response) => {
-  const reqLimits = req.requestLimitations || getReqLimitations(req);
-  const response = req.responseData;
+  const reqLimits = req.reqData?.requestLimitations || getReqLimitations(req);
+  const response = req.reqData.responseData;
 
   if (process.env.NODE_ENV === 'development') {
-    const redisData = req.redisData;
+    const redisData = req.reqData.redisData;
 
     response.debug = {
       startingTime: unixToDate(redisData.startingTimeStamp),

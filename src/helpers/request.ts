@@ -4,7 +4,7 @@ import { numberParseEnvData } from '../utils/data-util';
 import { REQUEST_TYPE } from '../constants/enums';
 
 export const getReqLimitations = (req: Request) => {
-  const epDetails = req.endpointDetails || getEndpointDetails(req);
+  const epDetails = req.reqData?.endpointDetails || getEndpointDetails(req);
 
   if (!epDetails) return;
 
@@ -20,7 +20,7 @@ export const getReqLimitations = (req: Request) => {
     reqWeight: epDetails.weight,
   };
 
-  req.requestLimitations = limitations;
+  req.reqData.requestLimitations = limitations;
   return limitations;
 };
 

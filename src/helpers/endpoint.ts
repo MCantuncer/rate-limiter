@@ -17,7 +17,7 @@ export const getEndpointDetails = (req: Request): IEndpointDetail => {
     (item: IEndpointDetail) => item.url === req.originalUrl
   );
 
-  req.endpointDetails = details!;
+  req.reqData.endpointDetails = details!;
   return details!;
 };
 
