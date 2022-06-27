@@ -4,6 +4,7 @@ import { redisHelper } from '../helpers/redis';
 import { getKeyByReqType, getReqLimitations } from '../helpers/request';
 import { IRedisData } from '../constants/interfaces';
 import { REDIS_REQUEST_TYPE, RESPONSE_STATUS } from '../constants/enums';
+import { unixToDate } from '../utils/date-util';
 
 export const redisRateLimiter = async (
   req: Request,
@@ -37,8 +38,15 @@ export const redisRateLimiter = async (
     }
 
     if (currentReqCount + reqWeight > maxReqCount) {
+      const nextAvailableTime = moment
+        .unix(redisData.startingTimeStamp)
+        .add(perXMinutes, 'minutes')
+        .unix();
+
       return res.status(RESPONSE_STATUS.TOO_MANY_REQUESTS).json({
-        message: `Request has exceeded the ${maxReqCount} requests in ${perXMinutes} minute(s)!`,
+        message: `Request has exceeded the ${maxReqCount} requests in ${perXMinutes} minute(s)!. You cannot use this endpoint before ${unixToDate(
+          nextAvailableTime
+        )}`,
       });
     }
 
