@@ -4,6 +4,7 @@ import moment from 'moment';
 import { IDebugData } from '../constants/interfaces';
 import { RESPONSE_STATUS } from '../constants/enums';
 import { getEndpointDetails } from './endpoint';
+import { unixToDate } from '../utils/date-util';
 
 // This handler will handle the request and will store response data inside request.
 export const basicHandler = (
@@ -29,9 +30,7 @@ export const finalResponseHandler = async (req: Request, res: Response) => {
     const redisData = req.redisData;
 
     response.debug = {
-      startingTime: moment
-        .unix(redisData.startingTimeStamp)
-        .format('DD/MM/YYYY HH:mm'),
+      startingTime: unixToDate(redisData.startingTimeStamp),
       requestCount: redisData.requestCount,
       remaining: reqLimits.maxReqCount - redisData.requestCount,
     } as IDebugData;
