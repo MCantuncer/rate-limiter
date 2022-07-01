@@ -1,4 +1,4 @@
-import { Express, NextFunction, Request, Response } from 'express';
+import { Express, Request } from 'express';
 import { afterMiddleware } from '../middlewares/after-middleware';
 import { redisHelper } from './redis';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,13 +6,11 @@ import {
   OPERATION_TYPE,
   REDIS_REQUEST_TYPE,
   REQUEST_TYPE,
-  RESPONSE_STATUS,
   TOKEN_TYPE,
 } from '../constants/enums';
 import { ENDPOINT_LIST } from '../constants/constants';
-import { IDebugData, IEndpointDetail } from '../constants/interfaces';
-import moment from 'moment';
-import { getReqLimitations } from './request';
+import { IEndpointDetail } from '../constants/interfaces';
+import { basicHandler, finalResponseHandler } from './handler';
 
 export const getEndpointDetails = (req: Request): IEndpointDetail => {
   const details = ENDPOINT_LIST.find(
@@ -21,37 +19,6 @@ export const getEndpointDetails = (req: Request): IEndpointDetail => {
 
   req.endpointDetails = details!;
   return details!;
-};
-
-// This handler will handle the request and will store response data inside request.
-const basicHandler = (req: Request, res: Response, next: NextFunction) => {
-  const epDetails = req.endpointDetails || getEndpointDetails(req);
-
-  req.responseData = {
-    message: `Endpoint type: ${epDetails.type}, weight: ${epDetails.weight}`,
-  };
-
-  next();
-};
-
-// This handler will be in charge of serving response with update regarding NODE_ENV.
-const finalResponseHandler = async (req: Request, res: Response) => {
-  const reqLimits = req.requestLimitations || getReqLimitations(req);
-  const response = req.responseData;
-
-  if (process.env.NODE_ENV === 'development') {
-    const redisData = req.redisData;
-
-    response.debug = {
-      startingTime: moment
-        .unix(redisData.startingTimeStamp)
-        .format('DD/MM/YYYY HH:mm'),
-      requestCount: redisData.requestCount,
-      remaining: reqLimits.maxReqCount - redisData.requestCount,
-    } as IDebugData;
-  }
-
-  return res.status(RESPONSE_STATUS.SUCCESS).json(response);
 };
 
 export const getKeyForPrivateEndpoint = async (
@@ -82,7 +49,7 @@ export const getKeyForPrivateEndpoint = async (
   return token;
 };
 
-// This method will create endpoints which are initialized on ENDPOINT_LIST constants.
+// This method will create endpoints which are initialized in ENDPOINT_LIST on constants.
 export const exposeEndpoints = (app: Express): void => {
   ENDPOINT_LIST.forEach((endpointDetail: IEndpointDetail) => {
     switch (endpointDetail.operation) {
