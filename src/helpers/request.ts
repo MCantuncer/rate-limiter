@@ -6,6 +6,8 @@ import { REQUEST_TYPE } from '../constants/enums';
 export const getReqLimitations = (req: Request) => {
   const epDetails = req.endpointDetails || getEndpointDetails(req);
 
+  if (!epDetails) return;
+
   const maxReqCount =
     epDetails.type === REQUEST_TYPE.PUBLIC
       ? numberParseEnvData(process.env.MAX_PUBLIC_REQUEST_COUNT)
