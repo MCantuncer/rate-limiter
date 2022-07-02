@@ -2,12 +2,16 @@ import express, { Express } from 'express';
 import dotenv from 'dotenv';
 import { redisRateLimiter } from './middlewares/rate-limiter';
 import { exposeEndpoints } from './helpers/endpoint';
+import { authMiddleware } from './middlewares/auth';
+import { isEndpointExistMiddleware } from './middlewares/is-endpoint-exist';
 
 dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT;
 
+app.use(isEndpointExistMiddleware);
+app.use(authMiddleware);
 app.use(redisRateLimiter);
 
 exposeEndpoints(app);
