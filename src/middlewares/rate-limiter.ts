@@ -10,7 +10,9 @@ export const redisRateLimiter = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { maxReqCount, perXHours, reqType, reqWeight } = getReqLimitations(req);
+  const { maxReqCount, perXMinutes, reqType, reqWeight } =
+    req.requestLimitations || getReqLimitations(req);
+
   const key = await getKeyByReqType(req, reqType);
 
   try {
@@ -27,17 +29,17 @@ export const redisRateLimiter = async (
     }
 
     const redisData = JSON.parse(redisRecord) as IRedisData;
-    const xHoursBefore = moment().subtract(perXHours, 'hours').unix();
+    const xMinutesBefore = moment().subtract(perXMinutes, 'minutes').unix();
     const currentReqCount = redisData.requestCount;
 
-    if (xHoursBefore > redisData.startingTimeStamp) {
+    if (xMinutesBefore > redisData.startingTimeStamp) {
       await initOnRedis(currentReqTime, key);
       return next();
     }
 
     if (currentReqCount + reqWeight > maxReqCount) {
       return res.status(RESPONSE_STATUS.TOO_MANY_REQUESTS).json({
-        message: `Request has exceeded the ${maxReqCount} requests in ${perXHours} hour limit!`,
+        message: `Request has exceeded the ${maxReqCount} requests in ${perXMinutes} minute(s)!`,
       });
     }
 

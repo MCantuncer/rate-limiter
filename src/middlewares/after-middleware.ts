@@ -4,13 +4,14 @@ import { getEndpointDetails } from '../helpers/endpoint';
 import { getKeyByReqType } from '../helpers/request';
 import { REDIS_REQUEST_TYPE } from '../constants/enums';
 
+// This middleware will update requestCount on redis if basicHandler works properly with success.
 export const afterMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const epDetails = getEndpointDetails(req.originalUrl);
-  const key = await getKeyByReqType(req, epDetails!.type);
+  const epDetails = req.endpointDetails || getEndpointDetails(req);
+  const key = await getKeyByReqType(req, epDetails.type);
 
   const record = await redisHelper({
     type: REDIS_REQUEST_TYPE.GET,
@@ -18,9 +19,11 @@ export const afterMiddleware = async (
   });
 
   const data = JSON.parse(record);
-  data.requestCount += epDetails!.weight;
+  data.requestCount += epDetails.weight;
   console.log(JSON.stringify(data));
 
   await redisHelper({ type: REDIS_REQUEST_TYPE.SET, key, data });
+
+  req.redisData = data;
   next();
 };
