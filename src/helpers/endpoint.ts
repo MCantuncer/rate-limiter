@@ -11,25 +11,49 @@ import {
   TOKEN_TYPE,
 } from '../constants/enums';
 import { ENDPOINT_LIST } from '../constants/constants';
-import { IEndpointDetail } from '../constants/interfaces';
+import { IDebugData, IEndpointDetail } from '../constants/interfaces';
+import moment from 'moment';
+import { getReqLimitations } from './request';
+import { isEndpointExistMiddleware } from '../middlewares/is-endpoint-exist';
 
-export const getEndpointDetails = (
-  originalUrl: string
-): IEndpointDetail | undefined => {
-  return ENDPOINT_LIST.find((item) => item.url === originalUrl);
+export const getEndpointDetails = (req: Request): IEndpointDetail => {
+  const details = ENDPOINT_LIST.find(
+    (item: IEndpointDetail) => item.url === req.originalUrl
+  );
+
+  req.endpointDetails = details!;
+  return details!;
 };
 
+// This handler will handle the request and will store response data inside request.
 const basicHandler = (req: Request, res: Response, next: NextFunction) => {
-  console.log(`Request has arrived.`);
+  const epDetails = req.endpointDetails || getEndpointDetails(req);
+
+  req.responseData = {
+    message: `Endpoint type: ${epDetails.type}, weight: ${epDetails.weight}`,
+  };
+
   next();
 };
 
-const finalResponseHandler = (req: Request, res: Response) => {
-  const epDetails = getEndpointDetails(req.originalUrl);
+// This handler will be in charge of serving response with update regarding NODE_ENV.
+const finalResponseHandler = async (req: Request, res: Response) => {
+  const reqLimits = req.requestLimitations || getReqLimitations(req);
+  const response = req.responseData;
 
-  return res.status(RESPONSE_STATUS.SUCCESS).json({
-    message: `Endpoint type: ${epDetails!.type}, weight: ${epDetails!.weight}`,
-  });
+  if (process.env.NODE_ENV === 'development') {
+    const redisData = req.redisData;
+
+    response.debug = {
+      startingTime: moment
+        .unix(redisData.startingTimeStamp)
+        .format('DD/MM/YYYY HH:mm'),
+      requestCount: redisData.requestCount,
+      remaining: reqLimits.maxReqCount - redisData.requestCount,
+    } as IDebugData;
+  }
+
+  return res.status(RESPONSE_STATUS.SUCCESS).json(response);
 };
 
 export const getKeyForPrivateEndpoint = async (
@@ -39,8 +63,6 @@ export const getKeyForPrivateEndpoint = async (
     return req.headers['private-api-key'] as string;
 
   const email = req.headers['email'] as string;
-
-  if (!email) return '';
 
   const token = await redisHelper({
     type: REDIS_REQUEST_TYPE.GET,
@@ -60,6 +82,7 @@ export const getKeyForPrivateEndpoint = async (
   return privateKey;
 };
 
+// This method will create endpoints which are initialized on ENDPOINT_LIST constants.
 export const exposeEndpoints = (app: Express): void => {
   ENDPOINT_LIST.forEach((endpointDetail: IEndpointDetail) => {
     switch (endpointDetail.operation) {
@@ -67,6 +90,7 @@ export const exposeEndpoints = (app: Express): void => {
         if (endpointDetail.type === REQUEST_TYPE.PRIVATE)
           app.get(
             `${endpointDetail.url}`,
+            isEndpointExistMiddleware,
             authMiddleware,
             basicHandler,
             afterMiddleware,
@@ -75,6 +99,7 @@ export const exposeEndpoints = (app: Express): void => {
 
         app.get(
           `${endpointDetail.url}`,
+          isEndpointExistMiddleware,
           basicHandler,
           afterMiddleware,
           finalResponseHandler
@@ -84,6 +109,7 @@ export const exposeEndpoints = (app: Express): void => {
         if (endpointDetail.type === REQUEST_TYPE.PRIVATE)
           app.post(
             `${endpointDetail.url}`,
+            isEndpointExistMiddleware,
             authMiddleware,
             basicHandler,
             afterMiddleware,
@@ -92,6 +118,7 @@ export const exposeEndpoints = (app: Express): void => {
 
         app.post(
           `${endpointDetail.url}`,
+          isEndpointExistMiddleware,
           basicHandler,
           afterMiddleware,
           finalResponseHandler
