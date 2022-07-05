@@ -1,5 +1,6 @@
 import { OPERATION_TYPE, REQUEST_TYPE } from './enums';
 
+// Endpoints will be defined here with weight attribute and other important props.
 export const ENDPOINT_LIST = [
   {
     url: '/public-endpoint-1',
