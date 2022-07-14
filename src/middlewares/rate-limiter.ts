@@ -12,7 +12,6 @@ export const redisRateLimiter = async (
 ) => {
   const { maxReqCount, perXMinutes, reqType, reqWeight } =
     req.requestLimitations || getReqLimitations(req);
-
   const key = await getKeyByReqType(req, reqType);
 
   try {

@@ -13,11 +13,10 @@ export const authMiddleware = async (
   if (epDetails!.type === REQUEST_TYPE.PUBLIC) return next();
 
   if (process.env.TOKEN_TYPE == TOKEN_TYPE.EMAIL) {
-    const email = req.headers['email'];
-    return EmailValidator.validate((email || '') as string)
+    return EmailValidator.validate((req.headers['email'] || '') as string)
       ? next()
       : res.status(RESPONSE_STATUS.UNAUTHORIZED).json({
-          message: `You should specify valid email on headers if TOKEN_TYPE is email on env variables`,
+          message: `You should specify valid email on headers with email key if TOKEN_TYPE is email on env variables`,
         });
   }
 
